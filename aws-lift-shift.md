@@ -45,3 +45,7 @@
   - ssh -i [key pair directory] ec2-user@[memcache public IP address]
   - ssh -i [key pair directory] ec2-user@[RabbitMQ public IP address]
   - ssh -i [key pair directory] ubuntu@[application public IP address]
+- Go to Route53 to create hosted zone in type Private and use the same region as instances
+- After that create the record with Simply Routing
+- Definy simple record
+  - db01.[hosted zone name] with private IP of db01 instance
