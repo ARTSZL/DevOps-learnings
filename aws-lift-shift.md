@@ -49,3 +49,5 @@
 - After that create the record with Simply Routing
 - Definy simple record
   - db01.[hosted zone name] with private IP of db01 instance
+  - mc01.[hosted zone name] with private IP of mc01 instance
+  - rmq01.[hosted zone name] with private IP of rmq01 instance
