@@ -34,4 +34,14 @@
     - Custom TCP, port: **5672**, source: **application security group** (for RabbitMQ)
     - All traffic, port: **All**, source: **backend security group** (allow internal traffic to flow on all ports)
     - Custom TCP, port: **22**, source: **My IP** (for SSH to instances)
-- 
+- Clone the repository https://github.com/hkhcoder/vprofile-project/tree/aws-LiftAndShift
+- Go to EC2 Instances and launch the instances
+  - Name: **db01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the mysql.sh entire script
+  - Name: **mc01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the memcache.sh entire script
+  - Name: **rmq01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the rabbitmq.sh entire script
+  - Name: **app01**, AMI: **Ubuntu Server 22.04 LTS**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **application security group**, in advanced details copy and paste the tomcat_ubuntu.sh entire script
+- To verify the services you can SSH to them using key pair and user name and IP
+  - ssh -i <key pair directory> ec2-user@<db public IP address>
+  - ssh -i <key pair directory> ec2-user@<memcache public IP address>
+  - ssh -i <key pair directory> ec2-user@<RabbitMQ public IP address>
+  - ssh -i <key pair directory> ubuntu@<application public IP address>
