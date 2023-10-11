@@ -63,4 +63,14 @@
 - In the terminal use **aws configure** and use the public password and private password, choose the region and file format
 - Create S3 bucket using **aws s3 mb s3://[unique bucket name]**
 - Copy the artifact to the s3 (aws s3 cp target/vprofile-v2.war s3://[unique bucket name])
-- 
+- Go to AWS console and in IAM create new Role with type: **AWS service**, use case: **EC2**, policy: **AmazonS3FullAccess**
+- Go to application EC2 instance and in the Actions > Security > Modify IAM role and select the IAM role from previous step
+- Ssh to the application instance using: ssh -i [key pair directory] ubuntu@[application public IP address]
+- Switch to ROOT user using **sudo -i** command
+- apt update
+- apt install awscli -y
+- Copy the artifact from S3 Bucket to the EC2 instance using aws s3 cp s3://[unique bucket name] /tmp/
+- systemctl stop tomcat9
+- Remove the default application: rm -rf /var/lib/tomcat9/webapps/ROOT
+- Copy the artifact: cp /tmp/ /var/lib/tomcat9/webapps/ROOT.war
+- systemctl start tomcat9
