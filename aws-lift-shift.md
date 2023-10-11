@@ -17,11 +17,10 @@
 ## Steps
 - In AWS console go to EC2
 - Choose the region
-- On left side find Key Pairs in Network & Security
-- Create Key Pair using the orange button on the right top 'Create key pair'
+- Create Key Pair
 - Add some short but descriptive name, choose the private key type and format, you can also add some tags
 - After created the key pair go to security group
-- Create Security Group using the orange button on the right top 'Create security group'
+- Create Security Groups:
   - Security group for Load Balancer with inbound rule:
     - HTTPS, port: **443**, source: **Anywhere**
   - Security group for Tomcat instance with inbound rules:
@@ -35,19 +34,33 @@
     - All traffic, port: **All**, source: **backend security group** (allow internal traffic to flow on all ports)
     - Custom TCP, port: **22**, source: **My IP** (for SSH to instances)
 - Clone the repository https://github.com/hkhcoder/vprofile-project/tree/aws-LiftAndShift
-- Go to EC2 Instances and launch the instances
+- Go to EC2 Instances and launch the instances:
   - Name: **db01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the mysql.sh entire script
   - Name: **mc01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the memcache.sh entire script
   - Name: **rmq01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the rabbitmq.sh entire script
   - Name: **app01**, AMI: **Ubuntu Server 22.04 LTS**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **application security group**, in advanced details copy and paste the tomcat_ubuntu.sh entire script
-- To verify the services you can SSH to them using key pair and user name and IP
+- To verify the services you can SSH to them using key pair and user name and IP:
   - ssh -i [key pair directory] ec2-user@[db public IP address]
   - ssh -i [key pair directory] ec2-user@[memcache public IP address]
   - ssh -i [key pair directory] ec2-user@[RabbitMQ public IP address]
   - ssh -i [key pair directory] ubuntu@[application public IP address]
 - Go to Route53 to create hosted zone in type Private and use the same region as instances
 - After that create the record with Simply Routing
-- Definy simple record
+- Definy simple records:
   - db01.[hosted zone name] with private IP of db01 instance
   - mc01.[hosted zone name] with private IP of mc01 instance
   - rmq01.[hosted zone name] with private IP of rmq01 instance
+- Go to file from repository ../src/main/resources/application.properties and there:
+  - Change the database URL according to the new name (jdbc.url=jdbc:mysql://db01.[hosted zone name]:3306/accounts?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull)
+  - Change the memcache.active.host=mc01.[hosted zone name]
+  - Change the rabbitmq.address=rmq01.[hosted zone name]
+- Save the changes and go to the directory where you have pom.xml file
+- Install JDK 11, Maven 3, AWS CLI
+- Then build the artifact using mvn install command in terminal
+- Go to AWS and create new IAM user with: Attached policies directly, **AmazonS3FullAccess**
+- After creation the user go to that users Security credentials
+- Create access key with Comand Line Inteerface (CLI) and download the access key file
+- In the terminal use **aws configure** and use the public password and private password, choose the region and file format
+- Create S3 bucket using **aws s3 mb s3://[unique bucket name]**
+- Copy the artifact to the s3 (aws s3 cp target/vprofile-v2.war s3://[unique bucket name])
+- 
