@@ -102,4 +102,4 @@ In this project we will be using Vprofile app, made by VisualPath and we will be
     - Choose one user
     - Go back
     - Choose the same user again (on top should be information that is from cache)
-Well done!
+- Well done!
