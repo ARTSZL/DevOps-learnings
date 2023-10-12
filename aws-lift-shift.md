@@ -1,5 +1,8 @@
 # Web app setup with AWS cloud [Lift&Shift]
 
+## Description
+In this project we will be using Vprofile app, made by VisualPath and we will be setting it up on AWS cloud.
+
 ## Flow of execution
 - Login to AWS Account
 - Create Key Pairs
@@ -74,3 +77,29 @@
 - Remove the default application: rm -rf /var/lib/tomcat9/webapps/ROOT
 - Copy the artifact: cp /tmp/ /var/lib/tomcat9/webapps/ROOT.war
 - systemctl start tomcat9
+- Go to AWS console and choose Target Group in Load Balancing tab
+- Create the Target Group with type: **Instances**, protocol: **HTTP**, port: **8080**, health check path: **/login** (for this application -Vprofile-), in Advanced health check settings overide port: **8080**
+- In the next step choose the application instance **app01**, choose 'Include as pending below' and hit 'Create target group'
+- Now create Application Load Balancer with scheme: **Internet-facing**, IP address type: **IPv4**, in mapping use all the zones for heigh availablity, use the Load Balancer Security Group, add listener: **HTTPS** on port: **443** with created Target Group, for HTTPS connection you have to select also the ACM certificate
+- After that use the Load Balancer endpoint and go to the domain provider and add new CNAME record which points to Load Balancer endpoint
+- To setup Auto Scaling Group for application server, Tomcat EC2 instance:
+  - Go to EC2 Instances console and create the AMI from app01 instance:
+    - Select app01 instance and in the Action tab choose Images > Create image
+  - Then go to Launch Configutations in Auto Scaling tab and create Launch Configuration:
+    - Select created earlier AMI, choose required instance type (t2.micro if you want to stay on free tier), use IAM role which was created earlier, check the EC2 monitoring within CloudWatch, use the application security group, created key pair and check the "I acknowledge..." checkmark
+  - Now go to Auto Scaling Groups and create Auto Scaling Group:
+    - Switch to launch configuration and choose one that was created earlier, select all the subnets, enabled load balancing and select the Target Group, use the Health check on ELB, You can decide on capacity, for automatic scale up and scale down you can use Target tracking scailing policy and choose metric type and target value, You can also add the notifications with tags
+- Now you have to EC2 app instances and if you want, you can terminate the app01 instace, to do that:
+  - Choose the app01 instance
+  - Go to Actions > Instance settings > Change termination protection and disabled checkmark
+  - Then go back to the app01 instance, go to Actions > Instance state > Terminate instance and terminate
+- Time for validation:
+  - Go to your browser and in the URL put your DNS record (eg. https://[CNAME].[domain name])
+  - To log in use: **admin_vp** for login and password
+  - When you logged in you can check the RabbitMQ by clicking the RubbitMQ button
+  - To check the memcache:
+    - Go to All Users
+    - Choose one user
+    - Go back
+    - Choose the same user again (on top should be information that is from cache)
+Well done!
