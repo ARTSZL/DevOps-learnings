@@ -1,5 +1,8 @@
 # Web app setup with AWS cloud [Lift&Shift]
 
+## Description
+In this project we will be using Vprofile app, made by VisualPath and we will be setting it up on AWS cloud.
+
 ## Flow of execution
 - Login to AWS Account
 - Create Key Pairs
@@ -15,3 +18,88 @@
 - Build Autoscaling Group for Tomcat Instances
 
 ## Steps
+- In AWS console go to EC2
+- Choose the region
+- Create Key Pair
+- Add some short but descriptive name, choose the private key type and format, you can also add some tags
+- After created the key pair go to security group
+- Create Security Groups:
+  - Security group for Load Balancer with inbound rule:
+    - HTTPS, port: **443**, source: **Anywhere**
+  - Security group for Tomcat instance with inbound rules:
+    - Custom TCP, port: **8080**, source: **security group of the Load Balancer**
+    - Custom TCP, port: **22**, source: **My IP** (for SSH to instances)
+    - Custom TCP, port: **8080**, source: **My IP** (for acces directly from browser rather than from the Load Balancer)
+  - Security group for backend services with inbound rules:
+    - MySQL, port: **3306**, source: **application security group** (for database)
+    - Custom TCP, port: **11211**, source: **application security group** (for memcache)
+    - Custom TCP, port: **5672**, source: **application security group** (for RabbitMQ)
+    - All traffic, port: **All**, source: **backend security group** (allow internal traffic to flow on all ports)
+    - Custom TCP, port: **22**, source: **My IP** (for SSH to instances)
+- Clone the repository https://github.com/hkhcoder/vprofile-project/tree/aws-LiftAndShift
+- Go to EC2 Instances and launch the instances:
+  - Name: **db01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the mysql.sh entire script
+  - Name: **mc01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the memcache.sh entire script
+  - Name: **rmq01**, AMI: **CentOS Streame 9**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **backend security group**, in advanced details copy and paste the rabbitmq.sh entire script
+  - Name: **app01**, AMI: **Ubuntu Server 22.04 LTS**, instance type: **t3.micro**, key pair: **created earlier**, firewall: **application security group**, in advanced details copy and paste the tomcat_ubuntu.sh entire script
+- To verify the services you can SSH to them using key pair and user name and IP:
+  - ssh -i [key pair directory] ec2-user@[db public IP address]
+  - ssh -i [key pair directory] ec2-user@[memcache public IP address]
+  - ssh -i [key pair directory] ec2-user@[RabbitMQ public IP address]
+  - ssh -i [key pair directory] ubuntu@[application public IP address]
+- Go to Route53 to create hosted zone in type Private and use the same region as instances
+- After that create the record with Simply Routing
+- Definy simple records:
+  - db01.[hosted zone name] with private IP of db01 instance
+  - mc01.[hosted zone name] with private IP of mc01 instance
+  - rmq01.[hosted zone name] with private IP of rmq01 instance
+- Go to file from repository ../src/main/resources/application.properties and there:
+  - Change the database URL according to the new name (jdbc.url=jdbc:mysql://db01.[hosted zone name]:3306/accounts?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull)
+  - Change the memcache.active.host=mc01.[hosted zone name]
+  - Change the rabbitmq.address=rmq01.[hosted zone name]
+- Save the changes and go to the directory where you have pom.xml file
+- Install JDK 11, Maven 3, AWS CLI
+- Then build the artifact using mvn install command in terminal
+- Go to AWS and create new IAM user with: Attached policies directly, **AmazonS3FullAccess**
+- After creation the user go to that users Security credentials
+- Create access key with Comand Line Inteerface (CLI) and download the access key file
+- In the terminal use **aws configure** and use the public password and private password, choose the region and file format
+- Create S3 bucket using **aws s3 mb s3://[unique bucket name]**
+- Copy the artifact to the s3 (aws s3 cp target/vprofile-v2.war s3://[unique bucket name])
+- Go to AWS console and in IAM create new Role with type: **AWS service**, use case: **EC2**, policy: **AmazonS3FullAccess**
+- Go to application EC2 instance and in the Actions > Security > Modify IAM role and select the IAM role from previous step
+- Ssh to the application instance using: ssh -i [key pair directory] ubuntu@[application public IP address]
+- Switch to ROOT user using **sudo -i** command
+- apt update
+- apt install awscli -y
+- Copy the artifact from S3 Bucket to the EC2 instance using aws s3 cp s3://[unique bucket name] /tmp/
+- systemctl stop tomcat9
+- Remove the default application: rm -rf /var/lib/tomcat9/webapps/ROOT
+- Copy the artifact: cp /tmp/ /var/lib/tomcat9/webapps/ROOT.war
+- systemctl start tomcat9
+- Go to AWS console and choose Target Group in Load Balancing tab
+- Create the Target Group with type: **Instances**, protocol: **HTTP**, port: **8080**, health check path: **/login** (for this application -Vprofile-), in Advanced health check settings overide port: **8080**
+- In the next step choose the application instance **app01**, choose 'Include as pending below' and hit 'Create target group'
+- Now create Application Load Balancer with scheme: **Internet-facing**, IP address type: **IPv4**, in mapping use all the zones for heigh availablity, use the Load Balancer Security Group, add listener: **HTTPS** on port: **443** with created Target Group, for HTTPS connection you have to select also the ACM certificate
+- After that use the Load Balancer endpoint and go to the domain provider and add new CNAME record which points to Load Balancer endpoint
+- To setup Auto Scaling Group for application server, Tomcat EC2 instance:
+  - Go to EC2 Instances console and create the AMI from app01 instance:
+    - Select app01 instance and in the Action tab choose Images > Create image
+  - Then go to Launch Configutations in Auto Scaling tab and create Launch Configuration:
+    - Select created earlier AMI, choose required instance type (t2.micro if you want to stay on free tier), use IAM role which was created earlier, check the EC2 monitoring within CloudWatch, use the application security group, created key pair and check the "I acknowledge..." checkmark
+  - Now go to Auto Scaling Groups and create Auto Scaling Group:
+    - Switch to launch configuration and choose one that was created earlier, select all the subnets, enabled load balancing and select the Target Group, use the Health check on ELB, You can decide on capacity, for automatic scale up and scale down you can use Target tracking scailing policy and choose metric type and target value, You can also add the notifications with tags
+- Now you have to EC2 app instances and if you want, you can terminate the app01 instace, to do that:
+  - Choose the app01 instance
+  - Go to Actions > Instance settings > Change termination protection and disabled checkmark
+  - Then go back to the app01 instance, go to Actions > Instance state > Terminate instance and terminate
+- Time for validation:
+  - Go to your browser and in the URL put your DNS record (eg. https://[CNAME].[domain name])
+  - To log in use: **admin_vp** for login and password
+  - When you logged in you can check the RabbitMQ by clicking the RubbitMQ button
+  - To check the memcache:
+    - Go to All Users
+    - Choose one user
+    - Go back
+    - Choose the same user again (on top should be information that is from cache)
+- Well done!
