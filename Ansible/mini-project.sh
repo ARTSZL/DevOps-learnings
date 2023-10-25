@@ -1,4 +1,7 @@
 #! /bin/bash
+
+# Slaves here using EC2 Instances, so use a keypair that has applied on to connect over SSH
+
 sudo apt update -y
 sudo apt install software-properties-common
 sudo apt-add-repository ppa:ansible/ansible
