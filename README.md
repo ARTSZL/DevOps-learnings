@@ -54,7 +54,7 @@ Before you begin with these projects, ensure you have the following prerequisite
 ### Local Setup with Vagrant
 <a name="local-setup-with-vagrant"></a>
 
-- [Project Details](local-setup-with-vagrant/README.md)
+- [Project Details](https://github.com/ARTSZL/desvops-learnings/blob/main/Vagrant/README.md)
 - [Project Code](https://github.com/ARTSZL/desvops-learnings/tree/vagrant)
 
 Learn how to set up local development environments using Vagrant. Follow the project details in the linked README for step-by-step instructions and exercises.
