@@ -62,7 +62,7 @@ Learn how to set up local development environments using Vagrant. Follow the pro
 ### Ansible Automation Project
 <a name="ansible-automation-project"></a>
 
-- [Project Details](ansible-automation-project/README.md)
+- [Project Details](https://github.com/ARTSZL/devops-learnings/blob/main/Ansible/README.md)
 - [Project Code](https://github.com/ARTSZL/desvops-learnings/tree/ansible-mini-project/Ansible)
 
 Discover Ansible automation and practice creating playbooks and roles for common automation tasks. Follow the project details in the linked README for hands-on exercises.
@@ -70,7 +70,7 @@ Discover Ansible automation and practice creating playbooks and roles for common
 ### Cloud Setup with Terraform
 <a name="cloud-setup-with-terraform"></a>
 
-- [Project Details](cloud-setup-with-terraform/README.md)
+- [Project Details](https://github.com/ARTSZL/devops-learnings/blob/terraform-project/Terraform/README.md)
 - [Project Code](https://github.com/ARTSZL/desvops-learnings/tree/azure-devops/Azure)
 
 Explore cloud infrastructure provisioning using Terraform. Learn how to define and deploy cloud resources using infrastructure as code. Refer to the project details in the linked README for in-depth guidance.
